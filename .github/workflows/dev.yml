@@ -7,14 +7,12 @@ on:
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
 
     steps:
 
       - name: Checkout Code
         uses: actions/checkout@v4
-
 
       - name: Setup SSH
         run: |
@@ -23,13 +21,21 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.DEV_HOST }} >> ~/.ssh/known_hosts
 
-
-      - name: Deploy to GCP VM
+      - name: Test SSH Connection
         run: |
-          ssh ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }} "
+          ssh -o StrictHostKeyChecking=no \
+          ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }} \
+          "echo Connected Successfully"
+
+
+      - name: Deploy Application
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+          ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }} "
           cd /home/annu_singh/app &&
           git checkout dev &&
           git pull origin dev &&
           npm install &&
-          sudo systemctl restart backend
+          sudo systemctl restart backend &&
+          sudo systemctl status backend --no-pager
           "
