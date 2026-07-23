@@ -1,4 +1,4 @@
-name: Dev CI/CD
+name: Development CI/CD
 
 on:
   push:
@@ -6,23 +6,30 @@ on:
       - dev
 
 jobs:
-  build:
+  deploy:
 
     runs-on: ubuntu-latest
 
     steps:
 
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
 
-    - name: Install Dependencies
-      run: npm install
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.DEV_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Application Test
-      run: |
-        echo "Dev Environment Testing Completed"
+
+      - name: Deploy to GCP VM
+        run: |
+          ssh ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }} "
+          cd /home/annu_singh/app &&
+          git checkout dev &&
+          git pull origin dev &&
+          npm install &&
+          sudo systemctl restart backend
+          "
