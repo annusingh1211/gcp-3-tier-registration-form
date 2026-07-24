@@ -1,0 +1,88 @@
+name: DEV Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+
+
+permissions:
+  contents: read
+  id-token: write
+
+
+jobs:
+
+  deploy-dev:
+
+    name: Deploy to DEV VM
+    runs-on: ubuntu-latest
+
+
+    steps:
+
+
+    # Checkout Code
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+
+
+    # Authenticate GCP using WIF
+    - name: Authenticate GCP
+      uses: google-github-actions/auth@v2
+      with:
+
+        workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+
+        service_account: ${{ secrets.SERVICE_ACCOUNT }}
+
+
+
+    # Install gcloud
+    - name: Setup Google Cloud
+      uses: google-github-actions/setup-gcloud@v2
+
+
+
+    # Deploy on VM
+    - name: Deploy Application on DEV VM
+      run: |
+
+
+        gcloud compute ssh backend-vm \
+        --zone us-central1-a \
+        --quiet \
+        --command "
+
+        cd ~/student-management-system &&
+
+
+        git checkout dev &&
+
+        git pull origin dev &&
+
+
+        echo 'Installing dependencies'
+
+
+        docker compose down
+
+
+        docker compose build
+
+
+        docker compose up -d
+
+
+
+        echo 'Reload Nginx'
+
+
+        sudo systemctl reload nginx
+
+
+
+        echo 'Deployment Successful'
+
+        "
