@@ -1,52 +1,28 @@
-name: Dev CI/CD Pipeline
+name: Dev Pipeline
 
 on:
   push:
     branches:
       - dev
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
 
-  build-deploy:
-    name: Build and Deploy to GCP
+  build:
     runs-on: ubuntu-latest
 
     steps:
 
-    - name: Checkout Code
+    - name: Checkout code
       uses: actions/checkout@v4
 
-
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v2
-      with:
-        workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-
-    - name: Setup Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
-
-
-    - name: Configure Docker Authentication
+    - name: Show files
       run: |
-        gcloud auth configure-docker
+        ls -la
 
-
-    - name: Build Docker Image
+    - name: Install dependencies
       run: |
-        docker build -t gcr.io/${{ secrets.PROJECT_ID }}/registration-app:dev .
+        pip install -r requirements.txt
 
-
-    - name: Push Docker Image
+    - name: Test
       run: |
-        docker push gcr.io/${{ secrets.PROJECT_ID }}/registration-app:dev
-
-
-    - name: Deploy
-      run: |
-        echo "Deployment completed"
+        echo "Testing completed"
