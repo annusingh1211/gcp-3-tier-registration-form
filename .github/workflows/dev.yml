@@ -1,4 +1,4 @@
-name: Dev Pipeline
+name: Dev CI Pipeline
 
 on:
   push:
@@ -6,24 +6,25 @@ on:
       - dev
 
 jobs:
-
   build:
+
     runs-on: ubuntu-latest
 
     steps:
 
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Show files
-      run: |
-        ls -la
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    - name: Install dependencies
-      run: |
-        cd server
-        npm install
+      - name: Install Dependencies
+        run: npm install
 
-    - name: Test
-      run: |
-        echo "Testing completed"
+      - name: Check Server Syntax
+        run: node --check server.js
+
+      - name: Pipeline Success
+        run: echo "Dev pipeline completed successfully"
