@@ -5,43 +5,26 @@ on:
     branches:
       - dev
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
-
   build:
 
     runs-on: ubuntu-latest
 
     steps:
 
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    - name: Check Project Files
-      run: |
-        ls -la
+      - name: Install Dependencies
+        run: npm install
 
+      - name: Check Server Syntax
+        run: node --check server.js
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
-
-
-    - name: Install Dependencies
-      run: |
-        npm install
-
-
-    - name: Test Server
-      run: |
-        node --check server.js
-
-
-    - name: Build Completed
-      run: |
-        echo "Node.js application build successful"
+      - name: Pipeline Success
+        run: echo "Dev pipeline completed successfully"
