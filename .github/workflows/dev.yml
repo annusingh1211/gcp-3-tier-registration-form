@@ -1,41 +1,52 @@
-name: Development CI/CD
+name: Dev CI/CD Pipeline
 
 on:
   push:
     branches:
       - dev
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
-  deploy:
+
+  build-deploy:
+    name: Build and Deploy to GCP
     runs-on: ubuntu-latest
 
     steps:
 
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.DEV_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Test SSH Connection
-        run: |
-          ssh -o StrictHostKeyChecking=no \
-          ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }} \
-          "echo Connected Successfully"
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
 
-      - name: Deploy Application
-        run: |
-          ssh -o StrictHostKeyChecking=no \
-          ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }} "
-          cd /home/annu_singh/app &&
-          git checkout dev &&
-          git pull origin dev &&
-          npm install &&
-          sudo systemctl restart backend &&
-          sudo systemctl status backend --no-pager
-          "
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+
+    - name: Configure Docker Authentication
+      run: |
+        gcloud auth configure-docker
+
+
+    - name: Build Docker Image
+      run: |
+        docker build -t gcr.io/${{ secrets.PROJECT_ID }}/registration-app:dev .
+
+
+    - name: Push Docker Image
+      run: |
+        docker push gcr.io/${{ secrets.PROJECT_ID }}/registration-app:dev
+
+
+    - name: Deploy
+      run: |
+        echo "Deployment completed"
